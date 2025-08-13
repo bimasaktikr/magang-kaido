@@ -89,4 +89,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerif
     {
         return true;
     }
+
+    public function student()
+    {
+        return $this->hasOne(\App\Models\Student::class);
+    }
 }

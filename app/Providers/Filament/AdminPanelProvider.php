@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\ApplicationDocuments;
+use App\Filament\Pages\BulkSetWorkMode;
+use App\Filament\Pages\BulkWorkMode;
 use App\Filament\Pages\Login;
 use App\Models\Student;
 use App\Models\User;
@@ -35,6 +38,7 @@ use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use App\Filament\Widgets\ApplicationStatusWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -64,18 +68,23 @@ class AdminPanelProvider extends PanelProvider
             ->when($this->settings->password_reset_enabled ?? true, fn($panel) => $panel->passwordReset())
             ->emailVerification()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Orange,
             ])
+            ->viteTheme('resources/css/filament/admin/theme.css')
             // ->visible(fn () => auth()->check() && !auth()->user()->hasRole('Applicant'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Pages\Dashboard::class,
+                BulkWorkMode::class,
+                ApplicationDocuments::class
+
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
+                ApplicationStatusWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -100,13 +109,33 @@ class AdminPanelProvider extends PanelProvider
             )
             ->databaseNotifications()
             ->navigationGroups([
-                NavigationGroup::make('')
-                    ->label('Universitas')
+                NavigationGroup::make('Internship')
+                    ->label('Internship')
                     ->icon('heroicon-o-academic-cap')
                     ->collapsed(),
-                NavigationGroup::make('')
-                    ->label('Intern')
-                    ->icon('heroicon-o-academic-cap')
+                NavigationGroup::make('Universitas')
+                    ->label('Universitas')
+                    ->icon('heroicon-o-building-library')
+                    ->collapsed(),
+                NavigationGroup::make('Office')
+                    ->label('Office')
+                    ->icon('heroicon-o-building-library')
+                    ->collapsed(),
+                NavigationGroup::make('Master')
+                    ->label('Master')
+                    ->icon('heroicon-o-window')
+                    ->collapsed(),
+                NavigationGroup::make('user')
+                    ->label('User')
+                    ->icon('heroicon-o-user-group')
+                    ->collapsed(),
+                NavigationGroup::make('settings')
+                    ->label('Settings')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->collapsed(),
+                NavigationGroup::make('Filament Shield')
+                    ->label('Filament Shield')
+                    ->icon('heroicon-o-shield-check')
                     ->collapsed(),
                 ])
             ;

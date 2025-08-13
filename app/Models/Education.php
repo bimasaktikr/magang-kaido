@@ -9,7 +9,11 @@ class Education extends Model
     //
 
     // add fillable
-    protected $fillable = [];
+    protected $fillable = [
+        'name',
+        'code',
+
+    ];
     // add guaded
     protected $guarded = ['id'];
     // add hidden

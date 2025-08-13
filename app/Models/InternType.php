@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class InternType extends Model
 {
-    //
+    // add fillable based on migration
 
     // add fillable
     protected $fillable = [

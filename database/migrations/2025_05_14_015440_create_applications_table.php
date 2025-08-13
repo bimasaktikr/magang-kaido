@@ -19,7 +19,7 @@ return new class extends Migration
             $table->date('req_end_date')->nullable();
             $table->date('accepted_start_date')->nullable();
             $table->date('accepted_end_date')->nullable();
-            $table->string('status')->nullable();
+            $table->enum('status', ['diproses', 'hold','ditolak', 'diterima'])->default('diproses');
             $table->timestamps();
         });
     }

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
+            $table->year('year_of_admission')->nullable();
+            $table->year('year_of_graduation')->nullable();
             $table->timestamps();
         });
     }

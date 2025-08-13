@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
-    //
+    // add fillable based on migration
+    protected $fillable = [
+        'name',
+        'slug',
+        // add other columns from the departments table migration as needed
+    ];
 
     // add fillable
-    protected $fillable = [];
     // add guaded
     protected $guarded = ['id'];
     // add hidden

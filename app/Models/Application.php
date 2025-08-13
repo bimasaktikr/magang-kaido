@@ -19,10 +19,30 @@ class Application extends Model
         'status',
         'introduction_letter_path',
         'submission_letter_path',
-        'cv_path'
+        'cv_path',
+        'hold_reason',
+        'rejection_reason', // <— NEW
+
     ];
     // add guaded
     protected $guarded = ['id'];
     // add hidden
     protected $hidden = ['created_at', 'updated_at'];
+
+    protected $casts = [
+        'req_start_date' => 'date',
+        'req_end_date' => 'date',
+        'accepted_start_date' => 'date',
+        'accepted_end_date' => 'date',
+    ];
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
+
+    public function internType()
+    {
+        return $this->belongsTo(InternType::class, 'intern_type_id');
+    }
 }

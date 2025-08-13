@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Program extends Model
 {
-    //
+    // add fillable based on migration
+    protected $fillable = [
+        'name',
+        'slug',
+        'degree',
+        'faculty_id',
+        'department_id',
+    ];
 
-    // add fillable
-    protected $fillable = [];
     // add guaded
     protected $guarded = ['id'];
     // add hidden

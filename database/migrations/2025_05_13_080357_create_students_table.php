@@ -24,8 +24,7 @@ return new class extends Migration
             $table->string('education_id')->constrained('educations')->onDelete('cascade')->nullable();
             $table->date('birth_date')->nullable();
             $table->enum('gender', ['male', 'female'])->nullable();
-            $table->year('year_of_admission')->nullable();
-            $table->year('year_of_graduation')->nullable();
+
             $table->timestamps();
         });
     }

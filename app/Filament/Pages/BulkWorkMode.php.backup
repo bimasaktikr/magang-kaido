@@ -1,0 +1,206 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use App\Models\Attendance;
+use App\Models\Student;
+use Filament\Forms;
+use Filament\Pages\Page;
+use Filament\Tables;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\CarbonPeriod;
+use Illuminate\Support\Collection;
+use Filament\Actions\Action as HeaderAction;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Support\Facades\Auth;
+
+class BulkSetWorkMode extends Page implements Tables\Contracts\HasTable, Forms\Contracts\HasForms
+{
+    use Tables\Concerns\InteractsWithTable;
+    use Forms\Concerns\InteractsWithForms;
+
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Internship';
+    protected static ?string $navigationLabel = 'Set Status Kerja';
+    protected static ?string $slug = 'set-status-kerja';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+        // $user = auth()->user();
+        // return Auth::check() && $user && method_exists($user, 'hasRole') && (
+        //     $user->hasRole('Ketua Tim') || $user->hasRole('super_admin')
+        // );
+    }
+
+    protected static string $view = 'filament.pages.bulk-set-work-mode';
+
+    // Page form state
+    public ?string $work_location = 'WFO';
+    public ?string $range_preset  = 'single';
+    public ?string $date          = null; // Y-m-d
+    public ?string $from          = null; // Y-m-d
+    public ?string $to            = null; // Y-m-d
+
+    // Authorization (gate or spatie/permission)
+    // public static function canAccess(): bool
+    // {
+    //     $user = auth()->user();
+    //     return $user && $user->can('attendance.bulk-set-work-mode');
+    // }
+
+    public function mount(): void
+    {
+        // reasonable default
+        $this->date = now()->toDateString();
+    }
+
+    /* ---------- Page Form (top) ---------- */
+
+    protected function getFormSchema(): array
+    {
+        return [
+            Forms\Components\Select::make('work_location')
+                ->label('Work Mode')
+                ->options([
+                    'WFO' => 'WFO (Office)',
+                    'WFA' => 'WFA (Anywhere)',
+                ])
+                ->required()
+                ->native(false),
+
+            Forms\Components\Select::make('range_preset')
+                ->label('Range Preset')
+                ->options([
+                    'single'     => 'Single date',
+                    'range'      => 'Custom range',
+                    'next_month' => 'Entire next month',
+                ])
+                ->default('single')
+                ->reactive()
+                ->native(false),
+
+            Forms\Components\DatePicker::make('date')
+                ->label('Date')
+                ->visible(fn (callable $get) => $get('range_preset') === 'single')
+                ->required(fn (callable $get) => $get('range_preset') === 'single'),
+
+            Forms\Components\DatePicker::make('from')
+                ->label('From')
+                ->visible(fn (callable $get) => $get('range_preset') === 'range')
+                ->required(fn (callable $get) => $get('range_preset') === 'range'),
+
+            Forms\Components\DatePicker::make('to')
+                ->label('To')
+                ->visible(fn (callable $get) => $get('range_preset') === 'range')
+                ->required(fn (callable $get) => $get('range_preset') === 'range'),
+        ];
+    }
+
+    /* ---------- Header actions ---------- */
+
+    protected function getHeaderActions(): array
+        {
+        return [
+            BulkAction::make('apply')
+                ->label('Apply to Selected')
+                ->icon('heroicon-o-check-circle')
+                ->requiresConfirmation()
+                ->action(function (Collection $records) {
+                    if ($records->isEmpty()) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('No students selected.')
+                            ->warning()
+                            ->send();
+                        return;
+                    }
+
+                    $dates = $this->resolveDates();
+                    if ($dates->isEmpty()) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Invalid / empty date range.')
+                            ->warning()
+                            ->send();
+                        return;
+                    }
+
+                    $workLocation = $this->work_location;
+
+                    $records->chunk(500)->each(function ($chunk) use ($dates, $workLocation) {
+                        $rows = [];
+                        foreach ($chunk as $student) {
+                            foreach ($dates as $date) {
+                                $rows[] = [
+                                    'student_id'    => $student->id,
+                                    'date'          => $date,
+                                    'work_location' => $workLocation,
+                                ];
+                            }
+                        }
+
+                        \App\Models\Attendance::upsert(
+                            $rows,
+                            ['student_id', 'date'],
+                            ['work_location']
+                        );
+                    });
+
+                    \Filament\Notifications\Notification::make()
+                        ->title("Work mode applied to {$records->count()} student(s).")
+                        ->success()
+                        ->send();
+
+                    // Clear the selection after success:
+                    $this->deselectAllTableRecords();
+                }),
+        ];
+    }
+
+    protected function resolveDates(): Collection
+    {
+        if ($this->range_preset === 'single') {
+            return collect([Carbon::parse($this->date)->toDateString()]);
+        }
+
+        if ($this->range_preset === 'range') {
+            $from = Carbon::parse($this->from)->startOfDay();
+            $to   = Carbon::parse($this->to)->startOfDay();
+
+            if ($from->gt($to)) {
+                $this->addError('from', 'The "From" date must be before or equal to "To" date.');
+                return collect();
+            }
+
+            return collect(CarbonPeriod::create($from, $to))
+                ->map(fn (Carbon $c) => $c->toDateString());
+        }
+
+        // next_month
+        $start = now()->addMonthNoOverflow()->startOfMonth();
+        $end   = (clone $start)->endOfMonth();
+
+        return collect(CarbonPeriod::create($start, $end))
+            ->map(fn (Carbon $c) => $c->toDateString());
+    }
+
+    /* ---------- Table of Students ---------- */
+
+    public function table(Tables\Table $table): Tables\Table
+    {
+        return $table
+            ->query(Student::query())
+            ->columns([
+                Tables\Columns\TextColumn::make('student_no')->label('Student No')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('class')->label('Class')->toggleable(isToggledHiddenByDefault: true),
+                // add any other columns you need
+            ])
+            ->recordUrl(null) // disable row click
+            ->paginated([25, 50, 100])
+            ->filters([
+                // optional: filters by class/department/etc
+            ])
+            ->bulkActions([]); // we use header action instead
+    }
+}
