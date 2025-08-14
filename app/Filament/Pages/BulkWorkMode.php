@@ -41,7 +41,7 @@ class BulkWorkMode extends Page implements Forms\Contracts\HasForms
         }
 
         $user = auth()->user();
-        if ($user->hasRole('superadmin') || $user->hasRole('ketua tim')) {
+        if ($user->hasRole('super_admin') || $user->hasRole('ketua tim')) {
             return true;
         }
 

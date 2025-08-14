@@ -49,15 +49,8 @@ class ViewApplication extends ViewRecord
                         return;
                     }
 
-                    // If you want to centralize, add service->acceptAsAdmin($record) method.
-                    $record->update([
-                        'accepted_start_date' => $record->req_start_date,
-                        'accepted_end_date'   => $record->req_end_date,
-                        'status'              => 'diterima',
-                        'hold_reason'         => null,
-                        'rejection_reason'    => null,
-                        'note'                => null,
-                    ]);
+                    // Centralize acceptance logic in ApplicationService
+                    $this->service()->acceptAsAdmin($record);
 
                     Notification::make()
                         ->title('Lamaran diterima')

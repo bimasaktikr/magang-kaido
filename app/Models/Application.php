@@ -41,6 +41,11 @@ class Application extends Model
         return $this->belongsTo(Student::class);
     }
 
+    public function user()
+    {
+        return $this->student ? $this->student->user() : null;
+    }
+
     public function internType()
     {
         return $this->belongsTo(InternType::class, 'intern_type_id');

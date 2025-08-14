@@ -24,6 +24,27 @@ class ApplicationService
     }
 
     /**
+     * Accept application as admin: set accepted dates to requested dates, status to 'diterima'.
+     */
+    public function acceptAsAdmin(Application $application): void
+    {
+        // Only allow if not already accepted
+        if ($application->status === 'diterima') {
+            return;
+        }
+
+        // Set accepted dates to requested dates
+        $application->accepted_start_date = $application->req_start_date;
+        $application->accepted_end_date = $application->req_end_date;
+        $application->status = 'diterima';
+        $application->hold_reason = null;
+        $application->rejection_reason = null;
+        $application->save();
+
+        // change role to intern using studentservice
+        app(\App\Services\StudentService::class)->setRoleToIntern($application->student_id);
+    }
+    /**
      * Build a status payload for the widget/dashboard.
      */
     public function statusPayloadForUser(int $userId): ?array
@@ -90,6 +111,10 @@ class ApplicationService
                 'rejection_reason' => null,
                 'hold_reason' => null,
             ]);
+
+             // change role to intern using studentservice
+             app(\App\Services\StudentService::class)->setRoleToIntern($app->student_id);
+
 
             return $app->fresh();
         });

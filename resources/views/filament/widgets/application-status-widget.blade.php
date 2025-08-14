@@ -44,6 +44,9 @@
                             Periode: <span class="font-medium">
                                 {{ $fmt($payload['accepted_start']) }} – {{ $fmt($payload['accepted_end']) }}
                             </span>
+                            <span class="ml-2 text-xs text-gray-400">
+                                (role: {{ auth()->user()?->getRoleNames()?->first() ?? 'user' }})
+                            </span>
                         </div>
                     @endif
                 </div>

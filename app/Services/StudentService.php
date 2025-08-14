@@ -115,4 +115,40 @@ class StudentService
 
         return true;
     }
+
+    /**
+     * Set the role of the student (by user_id or student_id) to 'Applicant'.
+     *
+     * @param int $studentId
+     * @return bool
+     */
+    public function setRoleToIntern($studentId)
+    {
+        $student = Student::find($studentId);
+
+        if (!$student || !$student->user_id) {
+            return false;
+        }
+
+        $user = \App\Models\User::find($student->user_id);
+
+        if (!$user) {
+            return false;
+        }
+
+        // Remove all roles and assign only 'Intern'
+        try {
+            $user->syncRoles(['Intern']);
+        } catch (\Throwable $e) {
+            // Log the error for debugging
+            \Log::error('Failed to assign Intern role: ' . $e->getMessage(), [
+                'student_id' => $studentId,
+                'user_id' => $user->id ?? null,
+                'exception' => $e,
+            ]);
+            return false;
+        }
+
+        return true;
+    }
 }

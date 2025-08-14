@@ -29,7 +29,7 @@ class AttendancePage extends Page implements HasTable
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $title = '';
+    protected static ?string $title = 'Presensi';
 
     public $checkInTime;
     public $checkOutTime;

@@ -18,18 +18,24 @@ class ApplicationStatusWidget extends Widget
     public ?string $note = null;            // used as reject reason input
     public bool $showRejectForm = false;
 
-    protected ApplicationService $service;
+    protected ?ApplicationService $service = null;
 
-    public function mount(): void
+    protected function service(): ApplicationService
     {
-        $this->service = app(ApplicationService::class);
+        return $this->service ??= app(ApplicationService::class);
     }
+    // public ApplicationService $service ;
+
+    // public function mount(): void
+    // {
+    //     $this->service = app(ApplicationService::class);
+    // }
 
     /** Payload for current user or null */
     public function getApplicationStatus(): ?array
     {
         $userId = (int) Auth::id();
-        return $this->service->statusPayloadForUser($userId);
+        return $this->service()->statusPayloadForUser($userId);
     }
 
     // ADD: helper to check document completeness
@@ -39,7 +45,7 @@ class ApplicationStatusWidget extends Widget
         if (! $payload) return false;
 
         $app = Application::find($payload['id']);
-        return $app ? $this->service->hasAllRequiredDocuments($app) : false;
+        return $app ? $this->service()->hasAllRequiredDocuments($app) : false;
     }
 
     /** Missing docs for current payload */
@@ -51,7 +57,7 @@ class ApplicationStatusWidget extends Widget
         $app = Application::find($payload['id']);
         if (! $app) return [];
 
-        return $this->service->missingRequiredDocuments($app);
+        return $this->service()->missingRequiredDocuments($app);
     }
 
     /** Whether Accept is allowed */
@@ -61,7 +67,7 @@ class ApplicationStatusWidget extends Widget
         if (! $payload) return false;
 
         $app = Application::find($payload['id']);
-        return $app ? $this->service->canAccept($app) : false;
+        return $app ? $this->service()->canAccept($app) : false;
     }
 
     public function acceptApplication(int $applicationId): void
@@ -149,6 +155,6 @@ class ApplicationStatusWidget extends Widget
 
     public static function canView(): bool
     {
-        return Auth::check() && Auth::user()->hasRole('Applicant');
+        return Auth::check() && (Auth::user()->hasRole('Applicant') || Auth::user()->hasRole('Intern'));
     }
 }
